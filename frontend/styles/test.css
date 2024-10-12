@@ -1,0 +1,151 @@
+.test {
+    padding-top: 20px;
+    padding-bottom: 70px;
+}
+
+.test__designation {
+    font-size: 20px;
+    color: #dcdcf3;
+    line-height: 24px;
+}
+
+.test__progressbar {
+    display: flex;
+    margin-top: 60px;
+    margin-bottom: 80px;
+}
+
+.test__title {
+    font-family: "Museo Sans Cyrl Bold", sans-serif;
+    font-size: 36px;
+    color: #333;
+}
+
+.test__title span {
+    color: #6933dc;
+}
+
+.test__question-options {
+    margin-top: 58px;
+    min-height: 344px;
+}
+
+.test__question-option {
+    font-size: 20px;
+    line-height: 24px;
+    margin-bottom: 20px;
+    display: flex;
+}
+
+.test__question-option label {
+    cursor: pointer;
+}
+
+.test__actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.test__time {
+    display: flex;
+    align-items: center;
+}
+
+.test__time-text {
+    line-height: 20px;
+    font-size: 17px;
+    color: #6933dc;
+    margin-right: 15px;
+}
+
+.test__time-clock {
+    background-image: url("/images/time.png");
+    background-size: cover;
+    background-position: center;
+    width: 27px;
+    height: 29px;
+    font-size: 10px;
+    text-align: center;
+    line-height: 28px;
+}
+
+.test__skip {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+.test__skip a {
+    font-size: 17px;
+    color: #6933dc;
+    line-height: 20px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.test__skip a:hover {
+    text-decoration: underline;
+}
+
+.test__skip a img {
+    margin-left: 13px;
+}
+
+
+
+.test__progressbar-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.test__progressbar-block:not(:first-child) {
+    margin-left: 130px;
+}
+
+.test__progressbar-block:not(:last-child)::before {
+    content: "";
+    z-index: -1;
+    position: absolute;
+    width: 180px;
+    height: 6px;
+    background: #DCDCF3;
+    top: 10px;
+    left: 28px;
+}
+
+.test__progressbar-circle {
+    background: #dcdcf3;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+}
+
+.test__progressbar-text {
+    font-size: 13px;
+    line-height: 16px;
+    margin-top: 10px;
+}
+
+.test__progressbar-block.complete:not(:last-child)::before {
+    background: #6933dc;
+}
+
+.test__progressbar-block.complete .test__progressbar-circle,
+.test__progressbar-block.active .test__progressbar-circle {
+    background: #6933dc;
+}
+
+.test__progressbar-block.active:after {
+    content: "";
+    border-radius: 50%;
+    z-index: 1;
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: #dcdcf3;
+    top: 6px;
+}
