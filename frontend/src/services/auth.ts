@@ -1,16 +1,19 @@
-import config from "../../config/config.js";
+import config from "../../config/config";
+import {UserInfoType} from "../types/user-info.type";
+import {RefreshResponseType} from "../types/refresh-response.type";
+import {LogoutResponseType} from "../types/logout-response.type";
 
 export class Auth {
 
-    static accessTokenKey = 'accessToken';
-    static refreshTokenKey = 'refreshToken';
-    static userInfoKey = 'userInfo';
+    public static accessTokenKey: string = 'accessToken';
+    private static refreshTokenKey: string = 'refreshToken';
+    private static userInfoKey: string = 'userInfo';
 
-    static async processUnauthorisedResponse() {
-        const refreshToken = localStorage.getItem(this.refreshTokenKey);
+    public static async processUnauthorisedResponse(): Promise<boolean> {
+        const refreshToken: string | null = localStorage.getItem(this.refreshTokenKey);
 
         if (refreshToken) {
-            const response = await fetch(config.host + '/refresh', {
+            const response: Response = await fetch(config.host + '/refresh', {
                 method: 'POST',
                 headers: {
                     'Content-type': 'application/json',
@@ -21,8 +24,8 @@ export class Auth {
 
 
             if (response && response.status === 200) {
-                const result = await response.json();
-                if (result && !result.error) {
+                const result: RefreshResponseType | null = await response.json();
+                if (result && !result.error && result.accessToken && result.refreshToken) {
                     this.setTokens(result.accessToken, result.refreshToken);
                     return true;
                 }
@@ -34,11 +37,12 @@ export class Auth {
         return false;
     }
 
-    static async logout() {
-        const refreshToken = localStorage.getItem(this.refreshTokenKey);
+    public static async logout(): Promise<boolean> {
+
+        const refreshToken: string | null = localStorage.getItem(this.refreshTokenKey);
 
         if (refreshToken) {
-            const response = await fetch(config.host + '/logout', {
+            const response: Response = await fetch(config.host + '/logout', {
                 method: 'POST',
                 headers: {
                     'Content-type': 'application/json',
@@ -47,35 +51,35 @@ export class Auth {
                 body: JSON.stringify({refreshToken: refreshToken})
             });
 
-
             if (response && response.status === 200) {
-                const result = await response.json();
+                const result: LogoutResponseType | null = await response.json();
                 if (result && !result.error) {
-                    localStorage.removeItem(Auth.userInfoKey);
+                    Auth.removeTokens();
+                    localStorage.removeItem(this.userInfoKey);
                     return true;
                 }
             }
         }
-        Auth.removeTokens();
-        localStorage.removeItem(Auth.userInfoKey);
+        return false;
     }
 
 
-    static setTokens(accessToken, refreshToken) {
+    public static setTokens(accessToken: string, refreshToken: string) {
         localStorage.setItem(this.accessTokenKey, accessToken);
         localStorage.setItem(this.refreshTokenKey, refreshToken);
     }
-    static removeTokens() {
+
+    private static removeTokens(): void {
         localStorage.removeItem(this.accessTokenKey);
         localStorage.removeItem(this.refreshTokenKey);
     }
 
-    static setUserInfo(info) {
+    public static setUserInfo(info): void {
         localStorage.setItem(this.userInfoKey, JSON.stringify(info));
     }
 
-    static getUserInfo() {
-        const userInfo = localStorage.getItem(this.userInfoKey);
+    public static getUserInfo(): UserInfoType | null {
+        const userInfo: string | null = localStorage.getItem(this.userInfoKey);
         if (userInfo) {
             return JSON.parse(userInfo);
         }

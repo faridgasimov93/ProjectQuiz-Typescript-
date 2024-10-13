@@ -1,5 +1,8 @@
-export type SignupResponseType = {
+export type LoginResponseType = {
     error: boolean,
-    user?: {id: number, email: string, name: string, lastName: string},
-    message: string,
+    accessToken?: string,
+    refreshToken?: string,
+    fullName?: string,
+    userId?: number,
+    message?: string,
 }

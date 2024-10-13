@@ -1,6 +1,4 @@
-export type RefreshResponseType = {
+export type LogoutResponseType = {
     error: boolean,
-    accessToken?: string,
-    refreshToken?: string,
     message: string,
 }

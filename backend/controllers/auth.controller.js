@@ -11,7 +11,7 @@ class AuthController {
             const {error} = ValidationUtils.signupValidation(req.body);
 
             if (error) {
-                return res.status(400).json({error: error.details[0].message});
+                return res.status(400).json({error: true, message: error.details[0].message});
             }
 
             let user = UserModel.findOne({email: req.body.email});
@@ -41,7 +41,7 @@ class AuthController {
             res.status(201).json({
                 user: {id: user.id, email: user.email, name: user.name, lastName: user.lastName},
                 error: false,
-                message: "Account created sucessfully"
+                message: "Account created successfully"
             });
         } catch (err) {
             console.log(err);
@@ -54,7 +54,7 @@ class AuthController {
             const {error} = ValidationUtils.loginValidation(req.body);
 
             if (error) {
-                return res.status(400).json({error: error.details[0].message});
+                return res.status(400).json({error: true, message: error.details[0].message});
             }
 
             const user = UserModel.findOne({email: req.body.email});
@@ -89,7 +89,7 @@ class AuthController {
     static async refresh(req, res) {
         const {error} = ValidationUtils.refreshTokenValidation(req.body);
         if (error) {
-            return res.status(400).json({error: error.details[0].message});
+            return res.status(400).json({error: true, message: error.details[0].message});
         }
 
         try {
@@ -104,7 +104,10 @@ class AuthController {
                 message: "Tokens created successfully",
             });
         } catch (e) {
-            return res.status(400).json(e);
+            return res.status(400).json({
+                error: true,
+                message: e.message,
+            });
         }
     }
 
@@ -112,11 +115,11 @@ class AuthController {
         try {
             const {error} = ValidationUtils.refreshTokenValidation(req.body);
             if (error) {
-                return res.status(400).json({error: error.details[0].message});
+                return res.status(400).json({error: true, message: error.details[0].message});
             }
             const user = UserModel.findOne({refreshToken: req.body.refreshToken});
             if (!user) {
-                return res.status(200).json({error: false, message: "Logged Out Sucessfully"});
+                return res.status(400).json({error: true, message: "Not found"});
             }
 
             UserModel.clearToken(user.email);

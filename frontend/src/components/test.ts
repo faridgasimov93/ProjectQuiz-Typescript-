@@ -1,9 +1,27 @@
-import {UrlManager} from "../utils/url-manager.js";
-import {CustomHttp} from "../services/custom-http.js";
-import config from "../../config/config.js";
-import {Auth} from "../services/auth.js";
+import {UrlManager} from "../utils/url-manager";
+import {CustomHttp} from "../services/custom-http";
+import config from "../../config/config";
+import {Auth} from "../services/auth";
+import {QueryParamsType} from "../types/query-params.type";
+import {UserResultType} from "../types/user-result.type";
+import {QuizType} from "../types/quiz.type";
+import {DefaultResponseType} from "../types/default-response.type";
 
 export class Test {
+
+    private nextButtonElement: HTMLElement | null;
+    private prevButtonElement: HTMLElement | null;
+    private passButtonElement: HTMLElement | null;
+    private questionTitleElement: HTMLElement | null;
+    private optionsElement: HTMLElement | null;
+    private progressBarElement: HTMLElement | null;
+    private quiz: QuizType | null;
+    private currentQuestionIndex: number;
+    readonly userResult: UserResultType[];
+    readonly answers: number[];
+    private routeParams: QueryParamsType;
+    private interval: number = 0;
+
 
     constructor() {
         this.nextButtonElement = null;
@@ -21,76 +39,93 @@ export class Test {
 
     }
 
-    async init() {
+    private async init(): Promise<void> {
         if (this.routeParams.id) {
             try {
-                const result = await CustomHttp.request(config.host + '/tests/' + this.routeParams.id);
+                const result: DefaultResponseType | QuizType = await CustomHttp.request(config.host + '/tests/' + this.routeParams.id);
                 if (result) {
-                    if (result.error) {
-                        throw new Error(result.error);
+
+                    if ((result as DefaultResponseType).error !== undefined) {
+                        throw new Error((result as DefaultResponseType).message);
                     }
-                    this.quiz = result;
+
+                    this.quiz = result as QuizType;
                     this.startQuiz();
                 }
             } catch (error) {
                 console.log(error);
+                return;
             }
         }
     }
 
-    startQuiz() {
+    private startQuiz(): void {
+        if (!this.quiz) return;
 
         this.progressBarElement = document.getElementById('progress-bar');
         this.questionTitleElement = document.getElementById('title');
-
         this.optionsElement = document.getElementById('options');
-
         this.nextButtonElement = document.getElementById('next');
-        this.nextButtonElement.onclick = this.move.bind(this, 'next');
-
+        if (this.nextButtonElement) {
+            this.nextButtonElement.onclick = this.move.bind(this, 'next');
+        }
         this.passButtonElement = document.getElementById('pass');
-        this.passButtonElement.onclick = this.move.bind(this, 'pass');
-
-        document.getElementById('pre-title').innerText = this.quiz.name
+        if (this.passButtonElement) {
+            this.passButtonElement.onclick = this.move.bind(this, 'pass');
+        }
+        const preTitleElement: HTMLElement | null = document.getElementById('pre-title')
+        if (preTitleElement) {
+            preTitleElement.innerText = this.quiz.name;
+        }
 
         this.prevButtonElement = document.getElementById('prev');
-        this.prevButtonElement.onclick = this.move.bind(this, 'prev');
+        if (this.prevButtonElement) {
+            this.prevButtonElement.onclick = this.move.bind(this, 'prev');
+        }
+
         this.prepareProgressBar();
         this.showQuestion();
 
-        const timerElement = document.getElementById('timer');
+        const timerElement: HTMLElement | null = document.getElementById('timer');
+
         let seconds = 59;
-        this.interval = setInterval(function () {
+        const that: Test = this;
+        this.interval = window.setInterval(function () {
             seconds--;
-            timerElement.innerText = seconds;
+            if (timerElement) {
+                timerElement.innerText = seconds.toString();
+            }
             if (seconds === 0) {
-                this.complete();
-                clearInterval(this.interval);
+                clearInterval(that.interval);
+                that.complete();
             }
         }.bind(this), 1000);
     }
 
-    prepareProgressBar() {
+    private prepareProgressBar(): void {
+        if (!this.quiz) return;
+
         for (let i = 0; i < this.quiz.questions.length; i++) {
 
-            const itemElement = document.createElement('div');
+            const itemElement: HTMLElement | null = document.createElement('div');
             itemElement.className = 'test__progressbar-block ' + (i === 0 ? 'active' : '');
 
-            const itemCircleElement = document.createElement('div');
+            const itemCircleElement: HTMLElement | null = document.createElement('div');
             itemCircleElement.className = 'test__progressbar-circle';
 
-            const itemTextElement = document.createElement('div');
+            const itemTextElement: HTMLElement | null = document.createElement('div');
             itemTextElement.className = 'test__progressbar-text';
             itemTextElement.innerText = 'Вопрос ' + (i + 1);
 
             itemElement.appendChild(itemCircleElement);
             itemElement.appendChild(itemTextElement);
-
-            this.progressBarElement.appendChild(itemElement);
+            if (this.progressBarElement) {
+                this.progressBarElement.appendChild(itemElement);
+            }
         }
     }
 
-    showQuestion() {
+    private showQuestion() {
         const activeQuestion = this.quiz.questions[this.currentQuestionIndex - 1];
         this.questionTitleElement.innerHTML = '<span>Вопрос ' + this.currentQuestionIndex + ':</span> ' + activeQuestion.question;
 
