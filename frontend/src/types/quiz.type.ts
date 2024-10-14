@@ -1,5 +1,17 @@
 export type QuizType = {
     id: number,
     name: string,
-    questions: Array<{ id: number, question: string, answers: Array<{ id: number, answer: string }> }>
+    questions: Array<QuizQuestionType>
+}
+
+export type QuizQuestionType = { 
+    id: number,
+    question: string,
+    answers: Array<QuizAnswerType> 
+}
+
+export type QuizAnswerType = {
+    correct: any
+    id: number,
+     answer: string
 }

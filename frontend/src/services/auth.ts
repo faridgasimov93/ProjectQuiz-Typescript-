@@ -74,7 +74,7 @@ export class Auth {
         localStorage.removeItem(this.refreshTokenKey);
     }
 
-    public static setUserInfo(info): void {
+    public static setUserInfo(info: UserInfoType): void {
         localStorage.setItem(this.userInfoKey, JSON.stringify(info));
     }
 

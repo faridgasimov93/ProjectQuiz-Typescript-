@@ -4,8 +4,12 @@ import config from "../../config/config";
 import {Auth} from "../services/auth";
 import {QueryParamsType} from "../types/query-params.type";
 import {UserResultType} from "../types/user-result.type";
-import {QuizType} from "../types/quiz.type";
+import {QuizQuestionType, QuizType, QuizAnswerType} from "../types/quiz.type";
 import {DefaultResponseType} from "../types/default-response.type";
+import { ActionTestType } from "../types/action-test.type";
+import { UserInfoType } from "../types/user-info.type";
+import { PassTestResponseType } from "../types/pass-test-response.type";
+
 
 export class Test {
 
@@ -67,11 +71,11 @@ export class Test {
         this.optionsElement = document.getElementById('options');
         this.nextButtonElement = document.getElementById('next');
         if (this.nextButtonElement) {
-            this.nextButtonElement.onclick = this.move.bind(this, 'next');
+            this.nextButtonElement.onclick = this.move.bind(this, ActionTestType.next);
         }
         this.passButtonElement = document.getElementById('pass');
         if (this.passButtonElement) {
-            this.passButtonElement.onclick = this.move.bind(this, 'pass');
+            this.passButtonElement.onclick = this.move.bind(this, ActionTestType.pass);
         }
         const preTitleElement: HTMLElement | null = document.getElementById('pre-title')
         if (preTitleElement) {
@@ -80,7 +84,7 @@ export class Test {
 
         this.prevButtonElement = document.getElementById('prev');
         if (this.prevButtonElement) {
-            this.prevButtonElement.onclick = this.move.bind(this, 'prev');
+            this.prevButtonElement.onclick = this.move.bind(this, ActionTestType.prev);
         }
 
         this.prepareProgressBar();
@@ -125,24 +129,30 @@ export class Test {
         }
     }
 
-    private showQuestion() {
-        const activeQuestion = this.quiz.questions[this.currentQuestionIndex - 1];
-        this.questionTitleElement.innerHTML = '<span>Вопрос ' + this.currentQuestionIndex + ':</span> ' + activeQuestion.question;
+    private showQuestion(): void {
+        if(!this.quiz) return;
 
-        this.optionsElement.innerHTML = '';
-        const that = this;
-        const chosenOption = this.userResult.find(item => item.questionId === activeQuestion.id);
-        activeQuestion.answers.forEach(answer => {
-            const optionElement = document.createElement('div');
+        const activeQuestion: QuizQuestionType = this.quiz.questions[this.currentQuestionIndex - 1];
+        if (this.questionTitleElement) {
+        this.questionTitleElement.innerHTML = '<span>Вопрос ' + this.currentQuestionIndex + ':</span> ' + activeQuestion.question;
+        }
+        if (this.optionsElement) {
+            this.optionsElement.innerHTML = '';
+        }
+        
+        const that: Test = this;
+        const chosenOption: UserResultType | undefined = this.userResult.find(item => item.questionId === activeQuestion.id);
+        activeQuestion.answers.forEach((answer: QuizAnswerType) => {
+            const optionElement: HTMLElement | null = document.createElement('div');
             optionElement.className = 'test__question-option';
 
             const inputId = 'answer-' + answer.id;
-            const inputElement = document.createElement('input');
+            const inputElement: HTMLElement | null = document.createElement('input');
             inputElement.className = 'option-answer';
             inputElement.setAttribute('id', inputId);
             inputElement.setAttribute('type', 'radio');
             inputElement.setAttribute('name', 'answer');
-            inputElement.setAttribute('value', answer.id);
+            inputElement.setAttribute('value', answer.id.toString());
             if (chosenOption && chosenOption.chosenAnswerId === answer.id) {
                 inputElement.setAttribute('checked', 'checked');
             }
@@ -151,64 +161,84 @@ export class Test {
                 that.chooseAnswer();
             }
 
-            const labelElement = document.createElement('label');
+            const labelElement: HTMLElement | null = document.createElement('label');
             labelElement.setAttribute('for', inputId);
             labelElement.innerText = answer.answer;
 
             optionElement.appendChild(inputElement);
             optionElement.appendChild(labelElement);
-
-            this.optionsElement.appendChild(optionElement);
+            if (this.optionsElement) {
+                this.optionsElement.appendChild(optionElement);
+            }
+            
         });
-        if (chosenOption && chosenOption.chosenAnswerId) {
+
+        if (this.nextButtonElement) {
+            if (chosenOption && chosenOption.chosenAnswerId) {
+                this.nextButtonElement.removeAttribute('disabled');
+            } else {
+                this.nextButtonElement.setAttribute('disabled', 'disabled');
+            }
+        }
+        
+        if (this.nextButtonElement) {
+            if (this.currentQuestionIndex === this.quiz.questions.length) {
+                this.nextButtonElement.innerText = 'Завершить';
+            } else {
+                this.nextButtonElement.innerText = 'Далее';
+            }
+        }
+        
+        if (this.prevButtonElement) {
+            if (this.currentQuestionIndex > 1) {
+                this.prevButtonElement.removeAttribute('disabled');
+            } else {
+                this.prevButtonElement.setAttribute('disabled', 'disabled');
+            }
+        }
+    }
+
+    private chooseAnswer() {
+        if (this.nextButtonElement) {
             this.nextButtonElement.removeAttribute('disabled');
-        } else {
-            this.nextButtonElement.setAttribute('disabled', 'disabled');
-        }
-        if (this.currentQuestionIndex === this.quiz.questions.length) {
-            this.nextButtonElement.innerText = 'Завершить';
-        } else {
-            this.nextButtonElement.innerText = 'Далее';
-        }
-        if (this.currentQuestionIndex > 1) {
-            this.prevButtonElement.removeAttribute('disabled');
-        } else {
-            this.prevButtonElement.setAttribute('disabled', 'disabled');
         }
     }
 
-    chooseAnswer() {
-        this.nextButtonElement.removeAttribute('disabled')
-    }
+    private move(action: ActionTestType):void {
 
-    move(action) {
+        if (!this.quiz) return;
 
-        const activeQuestion = this.quiz.questions[this.currentQuestionIndex - 1];
-        const chosenAnswer = Array.from(document.getElementsByClassName('option-answer')).find(element => {
-            return element.checked;
-        });
-        let chosenAnswerId = null;
+        const activeQuestion: QuizQuestionType = this.quiz.questions[this.currentQuestionIndex - 1];
+        const chosenAnswer: HTMLInputElement | undefined = Array.from(document.getElementsByClassName('option-answer')).find(element => {
+            return (element as HTMLInputElement).checked;
+        }) as HTMLInputElement;
+
+        let chosenAnswerId: number | null = null;
         if (chosenAnswer && chosenAnswer.value) {
             chosenAnswerId = Number(chosenAnswer.value);
         }
 
-        const existingResult = this.userResult.find(item => {
+        const existingResult: UserResultType | undefined = this.userResult.find(item => {
             return item.questionId === activeQuestion.id
         });
-        if (existingResult) {
-            existingResult.chosenAnswerId = chosenAnswerId;
-        } else {
-            this.userResult.push({
-                questionId: activeQuestion.id,
-                chosenAnswerId: chosenAnswerId,
-            })
+
+        if (chosenAnswerId) {
+            if (existingResult) {
+                existingResult.chosenAnswerId = chosenAnswerId;
+            } else {
+                this.userResult.push({
+                    questionId: activeQuestion.id,
+                    chosenAnswerId: chosenAnswerId,
+                })
+            }
+    
+            this.answers.push(chosenAnswerId);
+            this.answers.join(','); 
         }
-
-        this.answers.push(chosenAnswerId);
-        this.answers.join(',');
+        
 
 
-        if (action === 'next' || action === 'pass') {
+        if (action === ActionTestType.next || action === ActionTestType. pass) {
             this.currentQuestionIndex++;
         } else {
             this.currentQuestionIndex--;
@@ -219,37 +249,46 @@ export class Test {
             return;
         }
 
-        Array.from(this.progressBarElement.children).forEach((item, index) => {
-            const currentItemIndex = index + 1;
-            item.classList.remove('complete');
-            item.classList.remove('active');
-            if (currentItemIndex === this.currentQuestionIndex) {
-                item.classList.add('active');
-            } else if (currentItemIndex < this.currentQuestionIndex) {
-                item.classList.add('complete');
-            }
-        })
+        if (this.progressBarElement) {
+            Array.from(this.progressBarElement.children).forEach((item: Element, index: number) => {
+                const currentItemIndex: number = index + 1;
+                item.classList.remove('complete');
+                item.classList.remove('active');
+
+                if (currentItemIndex === this.currentQuestionIndex) {
+                    item.classList.add('active');
+                } else if (currentItemIndex < this.currentQuestionIndex) {
+                    item.classList.add('complete');
+                }
+            })
+        }
+        
         this.showQuestion();
     }
 
-    async complete() {
-        const userInfo = Auth.getUserInfo();
+    private async complete(): Promise<void> {
+        const userInfo: UserInfoType | null = Auth.getUserInfo();
         if (!userInfo) {
             location.href = '/#';
+            return;
         }
 
         try {
-            const result = await CustomHttp.request(config.host + '/tests/' + this.routeParams.id + '/pass', 'POST', {
+            if (userInfo) {
+                const result: DefaultResponseType | PassTestResponseType = await CustomHttp.request(config.host + '/tests/' + this.routeParams.id + '/pass', 'POST', {
                 userId: userInfo.userId,
                 results: this.userResult
-            })
+            });
 
             if (result) {
-                if (result.error) {
-                    throw new Error(result.error);
+                if ((result as DefaultResponseType).error !== undefined) {
+                    throw new Error((result as DefaultResponseType).message);
                 }
+
                 location.href = '#/result?id=' + this.routeParams.id;
             }
+        }
+            
         } catch (error) {
             console.log(error);
         }

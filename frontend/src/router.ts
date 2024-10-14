@@ -2,7 +2,7 @@ import {Form} from "./components/form";
 import {Choice} from "./components/choice";
 import {Test} from "./components/test";
 import {Result} from "./components/result";
-import {Answers} from "./components/answers";
+// import {Answers} from "./components/answers";
 import {Auth} from "./services/auth";
 import {RouteType} from "./types/route.type";
 import {UserInfoType} from "./types/user-info.type";
@@ -76,15 +76,15 @@ export class Router {
                     new Result();
                 }
             },
-            {
-                route: '#/answers',
-                title: 'Правильные ответы',
-                template: 'templates/answers.html',
-                styles: 'styles/answers.css',
-                load: () => {
-                    new Answers();
-                }
-            },
+            // {
+            //     route: '#/answers',
+            //     title: 'Правильные ответы',
+            //     template: 'templates/answers.html',
+            //     styles: 'styles/answers.css',
+            //     load: () => {
+            //         new Answers();
+            //     }
+            // },
 
         ]
     }

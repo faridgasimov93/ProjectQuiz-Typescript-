@@ -1,9 +1,15 @@
-import {UrlManager} from "../utils/url-manager.js";
+import {UrlManager} from "../utils/url-manager";
 import {CustomHttp} from "../services/custom-http";
 import config from "../../config/config";
 import {Auth} from "../services/auth";
+import { QueryParamsType } from "../types/query-params.type";
+import { UserInfoType } from "../types/user-info.type";
+import { PassTestResponseType } from "../types/pass-test-response.type";
+import { DefaultResponseType } from "../types/default-response.type";
 
 export class Result {
+
+    private routeParams: QueryParamsType;
 
     constructor() {
         this.routeParams = UrlManager.getQueryParams();
@@ -19,27 +25,35 @@ export class Result {
         this.init();
 
         const resultLink = document.querySelector('.result__link a');
-        resultLink.addEventListener('click', function (event) {
-            event.preventDefault();
-            location.href = '#/answers?id=' + id + '&score=' + score + '&name=' + name + '&lastName=' + lastName + '&email=' + email + '&results=' + results;
-        });
+        if (resultLink) {
+            resultLink.addEventListener('click', function (event) {
+                event.preventDefault();
+                location.href = '#/answers?id=' + id + '&score=' + score + '&name=' + name + '&lastName=' + lastName + '&email=' + email + '&results=' + results;
+            });
+        }
     }
 
-    async init() {
-        const userInfo = Auth.getUserInfo();
+    private async init(): Promise<void> {
+        const userInfo: UserInfoType | null = Auth.getUserInfo();
         if (!userInfo) {
             location.href = '/#';
+            return;
         }
 
         if (this.routeParams.id) {
             try {
-                const result = await CustomHttp.request(config.host + '/tests/' + this.routeParams.id + '/result?userId=' + userInfo.userId);
+                const result: PassTestResponseType | DefaultResponseType = await CustomHttp.request(config.host + '/tests/' + this.routeParams.id + '/result?userId=' + userInfo.userId);
 
                 if (result) {
-                    if (result.error) {
-                        throw new Error(result.error);
+
+                    if ((result as DefaultResponseType).error !== undefined) {
+                        throw new Error((result as DefaultResponseType).message);
                     }
-                    document.getElementById('result-score').innerText = result.score + '/' + result.total;
+                    const resultScoreElement: HTMLElement | null = document.getElementById('result-score');
+                    if(resultScoreElement) {
+                        resultScoreElement.innerText = (result as PassTestResponseType).score + '/' + (result as PassTestResponseType).total;
+                    }
+                    
                     return;
                 }
             } catch (error) {
